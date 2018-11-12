@@ -8,10 +8,13 @@ def get_suites():
     return [x.Suite() for x in suite_modules]
 
 def load_suites():
+    print("Loading suites")
     modules = []
     for suite, suite_file in get_suite_files():
+        print(suite, suite_file)
         candidate = imp.load_source(suite, suite_file)
         if looks_like_suite(candidate):
+            print(candidate)
             check_suite(candidate)
             modules.append(candidate)
     return modules
@@ -51,8 +54,8 @@ def check_run(test):
 
 def check_method(class_object, name, number_of_args):
     class_name = class_object.__name__
-    predicate = lambda x : inspect.ismethod(x) and x.__name__ == name
-    matching_functions = inspect.getmembers(class_object, predicate)
+    class_fields = inspect.getmembers(class_object)
+    matching_functions = [f for f in class_fields if f[0] == name]
     if len(matching_functions) != 1:
         utils.error("'{0}' class must have '{1}' method!".format(class_name, name))
     spec = inspect.getargspec(matching_functions[0][1])

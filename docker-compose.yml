@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+    polygon:
+        build: .
+    mongo:
+        image: mongo:3.4.0
+        ports:
+            - "27017:27017"

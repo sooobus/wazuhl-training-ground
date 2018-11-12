@@ -1,7 +1,7 @@
 import os
 from optparse import OptionParser
-import config
-import utils
+from src import config
+from src import utils
 
 def parse():
     usage = "usage: %prog [options] [wazuhl installation directory]"

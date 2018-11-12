@@ -12,7 +12,7 @@ def check_executable(executable):
         error("Couldn't find '{0}' executable, please, check your environment".format(executable))
 
 def error(message):
-    print "Error:", message
+    print("Error:", message)
     sys.exit(1)
 
 def pathify(line):

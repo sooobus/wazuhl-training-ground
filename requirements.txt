@@ -1,0 +1,3 @@
+pymongo
+cmake
+svn+http://llvm.org/svn/llvm-project/llvm/trunk/utils/lit

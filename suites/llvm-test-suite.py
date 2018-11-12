@@ -16,6 +16,8 @@ class Suite:
         output = config.get_output()
         suite = os.path.join(output, self.name)
 
+        print(suite)
+
         self.build = os.path.join(output, self.name + "-build")
         if os.path.exists(self.build):
             shutil.rmtree(self.build)
@@ -32,14 +34,17 @@ class Suite:
                              '-DCMAKE_C_FLAGS_RELEASE={0}'.format(COPTS),
                              '-DCMAKE_CXX_FLAGS_RELEASE={0}'.format(CXXOPTS)],
                             env=configuration_env, stdout=devnull, stderr=devnull)
-        print "Configuration is finished"
+        print("Configuration is finished")
 
         self.__init_tests__()
 
     def __init_tests__(self):
         utils.check_executable('lit')
-        lit = subprocess.Popen(['lit', '--show-tests', '.'], stdout=subprocess.PIPE)
-        output = lit.stdout.read()
+        print('LIT')
+        print(os.listdir('/wazuhl-polygon/suites/llvm-test-suite'))
+        print('LIT')
+        lit = subprocess.Popen(['lit', '--show-tests', '/wazuhl-polygon/suites/llvm-test-suite'], stdout=subprocess.PIPE)
+        output = lit.stdout.read().decode('utf-8')
         pattern = r'test-suite :: (.*)'
         results = re.findall(pattern, output)
         self.tests = [Test(os.path.join(self.build, test), self) for test in results]

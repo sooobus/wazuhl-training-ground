@@ -5,8 +5,8 @@ import pprint
 import os
 import shutil
 
-import config
-import utils
+from src import config
+from src import utils
 
 class Experience:
     def __init__(self):
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     experience.waiting.insert_many(dummy_waiting)
     experience.fill_records(178.41)
     for item in experience.approved.find():
-        print item["values"]
+        print(item["values"])
         pprint.pprint(item)
     experience.mongo.terminate()
     shutil.rmtree(dbpath)

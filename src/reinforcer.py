@@ -1,9 +1,10 @@
 import pickle
 import os
 
-import config
-import testrunner
-import utils
+from src import config
+from src import testrunner
+from src import utils
+
 
 class Reinforcer:
     def __init__(self, suites):
@@ -17,7 +18,12 @@ class Reinforcer:
 
     def measure_baseline(self, name, flags, test_attr, rerun=True):
         cache_file = Reinforcer.__etalon_file__(name, flags)
-        results = getattr(self, name)
+        # TODO: Make less ugly baseline storing, maybe use dict instead of getattr.
+        results = None
+        try:
+            results = getattr(self, name)
+        except:
+            pass
         results = self.__load_cache__(cache_file)
         if not results:
             results = {}
@@ -39,11 +45,14 @@ class Reinforcer:
         return (E - Ep) / E + alpha * (C - Cp) / C
 
     def run(self):
+        print("Reinforcer running. Getting tests")
         tests = testrunner.get_tests('-OW -ftrain-wazuhl')
+        print("Got tests")
         self.__check__(tests)
-        while(True):
+        print("Checked tests")
+        while (True):
             result = testrunner.run_random(test)
-            print "Result: ", self.calculate_reward(result)
+            print("Result: ", self.calculate_reward(result))
 
     def __check__(self, tests):
         tests = set(map(str, tests))
