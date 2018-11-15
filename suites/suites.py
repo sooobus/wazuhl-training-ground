@@ -11,10 +11,8 @@ def load_suites():
     print("Loading suites")
     modules = []
     for suite, suite_file in get_suite_files():
-        print(suite, suite_file)
         candidate = imp.load_source(suite, suite_file)
         if looks_like_suite(candidate):
-            print(candidate)
             check_suite(candidate)
             modules.append(candidate)
     return modules

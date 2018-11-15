@@ -12,6 +12,9 @@ class Reinforcer:
         self.alpha = config.get_alpha()
         self.tests = []
 
+        self.compilation = {}
+        self.execution = {}
+
     def init_baselines(self, compilation, execution):
         self.measure_baseline("compilation", compilation, "compile_time")
         self.measure_baseline("execution", execution, "execution_time", compilation != execution)
@@ -33,6 +36,7 @@ class Reinforcer:
 
             for test in self.tests:
                 results[str(test)] = getattr(test, test_attr)
+
             self.__cache__(results, cache_file)
 
     def calculate_reward(self, test):
@@ -46,12 +50,12 @@ class Reinforcer:
 
     def run(self):
         print("Reinforcer running. Getting tests")
-        tests = testrunner.get_tests('-OW -ftrain-wazuhl')
+        tests = testrunner.get_tests(self.suites, '-OW -ftrain-wazuhl')
         print("Got tests")
         self.__check__(tests)
         print("Checked tests")
         while (True):
-            result = testrunner.run_random(test)
+            result = testrunner.run_random(tests)
             print("Result: ", self.calculate_reward(result))
 
     def __check__(self, tests):
@@ -63,9 +67,10 @@ class Reinforcer:
             utils.error(message.format("compilation"))
         if tests != execution_tests:
             utils.error(message.format("execution"))
+        assert len(tests) > 0, "Test suite is empty!"
 
     def __cache__(self, data, cache_file):
-        with open(cache_file, 'w') as cache:
+        with open(cache_file, 'wb') as cache:
             pickle.dump(data, cache)
 
     def __load_cache__(self, cache_file):

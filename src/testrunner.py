@@ -14,7 +14,8 @@ def run(tests):
     return tests
 
 def run_random(tests):
-    test = random.pick(tests)
+    assert len(tests) > 0, "Please provide some tests to run_random"
+    test = random.choice(tests)
     return run_test(test)
 
 def run_test(test):
