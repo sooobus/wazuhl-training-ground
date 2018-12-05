@@ -10,6 +10,7 @@ class Suite:
         self.tests = []
 
     def get_tests(self):
+        print("returning tests", len(self.tests))
         return self.tests
 
     def configure(self, CC, CXX, COPTS, CXXOPTS):
@@ -18,37 +19,48 @@ class Suite:
 
         print(suite)
 
-        self.build = os.path.join(output, self.name + "-build")
+        suite = '/home/valeriia/tr_gr/suites/test-suite'
+
+        self.build = '/home/valeriia/tr_gr/suites/llvm-test-suite-build'
         if os.path.exists(self.build):
             shutil.rmtree(self.build)
         os.makedirs(self.build)
         self.go_to_builddir()
 
-        configuration_env = os.environ.copy()
-        configuration_env['CC'] = CC
-        configuration_env['CXX'] = CXX
+        self.configuration_env = os.environ.copy()
+        self.configuration_env['CC'] = CC
+        self.configuration_env['CXX'] = CXX
+        self.configuration_env['LD_LIBRARY_PATH'] = '/home/valeriia/caffe/build/lib/:'
 
-        with open(os.devnull, 'wb') as devnull:
-            subprocess.call(['cmake', suite,
+        make_command = ['cmake', '/home/valeriia/tr_gr/suites/test-suite',
                              '-DCMAKE_BUILD_TYPE=Release',
                              '-DCMAKE_C_FLAGS_RELEASE={0}'.format(COPTS),
-                             '-DCMAKE_CXX_FLAGS_RELEASE={0}'.format(CXXOPTS)],
-                            env=configuration_env, stdout=devnull, stderr=devnull)
+                             '-DCMAKE_CXX_FLAGS_RELEASE={0}'.format(CXXOPTS)]
+        print(make_command)
+        with open(os.devnull, 'wb') as devnull:
+            cmake_output = subprocess.Popen(make_command, env=self.configuration_env, stdout=subprocess.PIPE)
+            out = cmake_output.stdout.read().decode('utf-8')
+            #print(out)
+
         print("Configuration is finished")
 
         self.__init_tests__()
 
     def __init_tests__(self):
         utils.check_executable('lit')
-        print('LIT')
-        print(os.listdir('/wazuhl-polygon/suites/llvm-test-suite'))
-        print('LIT')
-        lit = subprocess.Popen(['lit', '--show-tests', '/wazuhl-polygon/suites/llvm-test-suite'], stdout=subprocess.PIPE)
+        #print('LIT')
+        #print(os.listdir('/wazuhl-polygon/suites/llvm-test-suite'))
+        #print('LIT')
+        lit = subprocess.Popen(['lit', '--show-tests', '/home/valeriia/tr_gr/suites/llvm-test-suite-build'], stdout=subprocess.PIPE)
         output = lit.stdout.read().decode('utf-8')
         pattern = r'test-suite :: (.*)'
         results = re.findall(pattern, output)
+        self.build = "/home/valeriia/tr_gr/suites/llvm-test-suite-build/"
+        print("in the end of init tests")
         self.tests = [Test(os.path.join(self.build, test), self) for test in results]
+        print("len tests", len(self.tests))
         self.tests = [test for test in self.tests if "Benchmark" in test.path]
+        print("len tests", len(self.tests))
 
     def go_to_builddir(self):
         os.chdir(self.build)
@@ -68,11 +80,15 @@ class Test:
     def compile(self):
         self.suite.go_to_builddir()
         with open(os.devnull, 'wb') as devnull:
-            subprocess.call(['make', '-j5', self.name], stdout=devnull, stderr=devnull)
+            #,  'VERBOSE=1'
+            make_output = subprocess.Popen(['make', '-j5', self.name], env=self.suite.configuration_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out = make_output.stdout.read().decode('utf-8')
+            #print(out)
 
     def run(self):
         test_run = subprocess.Popen(['lit', self.path], stdout=subprocess.PIPE)
-        output = test_run.stdout.read()
+        output = test_run.stdout.read().decode('utf-8')
+        #print(output)
         compile_pattern = r'compile_time: (.*)'
         execution_pattern = r'exec_time: (.*)'
         compile_time = re.search(compile_pattern, output)

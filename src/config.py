@@ -8,9 +8,11 @@ def set_output(directory):
     define_getter("get_output", directory)
 
 def get_clang():
+    return '/home/valeriia/llvm-build/build/bin/clang'
     return os.path.join(get_wd(), "bin", "clang")
 
 def get_clangpp():
+    return '/home/valeriia/llvm-build/build/bin/clang++'
     return os.path.join(get_wd(), "bin", "clang++")
 
 def get_mongodb():
