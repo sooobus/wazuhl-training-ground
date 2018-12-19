@@ -16,7 +16,7 @@ def parse():
                       help='Directory to store training files')
 
     (options, args) = parser.parse_args()
-    if len(args) != 1:
+    if len(args) == 0:
         utils.error("Please, specify path to Wazuhl installation")
 
     installation = args[0]

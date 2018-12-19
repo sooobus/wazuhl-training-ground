@@ -1,3 +1,4 @@
+import logging
 import pickle
 import os
 
@@ -14,57 +15,58 @@ class Reinforcer:
 
         self.baselines = {"compile_time": {}, "execution_time": {}}
 
-    def init_baselines(self, compilation, execution):
-        self.measure_baseline("compilation", compilation, "compile_time")
-        self.measure_baseline("execution", execution, "execution_time", compilation != execution)
+    def measure_baseline(self, flags, rerun=False):
+        logging.info("Measuring baseline")
+        cache_file = Reinforcer.__etalon_file__("baselines", flags)
+        logging.info(cache_file)
+        self.baselines = self.__load_cache__(cache_file)
+        if not self.baselines or rerun:
+            self.baselines = {"compile_time": {}, "execution_time": {}}
+            self.tests = testrunner.get_tests(self.suites, flags)
+            self.tests = testrunner.run(self.tests)
 
-    def measure_baseline(self, name, flags, test_attr, rerun=True):
-        print("Measuring baseline")
-        cache_file = Reinforcer.__etalon_file__(name, flags)
-        results = {} #self.__load_cache__(cache_file)
-        if not results:
-            results = {}
-            if rerun or not self.tests:
-                self.tests = testrunner.get_tests(self.suites, flags)
-                self.tests = testrunner.run(self.tests)
-
-            print("38")
             for test in self.tests:
-                self.baselines["compile_time"][test.name] = test.compile_time
-                self.baselines["execution_time"][test.name] = test.execution_time
+                if test.compile_time is not None:
+                    self.baselines["compile_time"][test.name] = test.compile_time
+                if test.execution_time is not None:
+                    self.baselines["execution_time"][test.name] = test.execution_time
 
-            self.__cache__(results, cache_file)
-        print("baselines")
-        print(self.baselines)
-        self.__check__(self.tests)
+            self.__cache__(self.baselines, cache_file)
+        logging.info("Baselines measured")
+        nones = [p for p in self.baselines["compile_time"] if self.baselines["compile_time"][p] is None]
+        logging.info(nones)
+        assert None not in self.baselines["compile_time"].values(), "None in test"
 
     def calculate_reward(self, test):
         C = self.baselines["compile_time"][test.name]
         E = self.baselines["execution_time"][test.name]
+        assert C is not None, test.name in self.baselines["compile_time"]
         alpha = self.alpha
         Cp = test.compile_time
         Ep = test.execution_time
-        print(Cp, Ep)
+        logging.info("Cp = {}, C = {}, Ep = {}, E = {}".format(Cp, C, Ep, E))
         if not Cp or not Ep: return -1
-        return (E - Ep) / E + alpha * (C - Cp) / C
+        return (E - Ep) / (E + 1e-10) + alpha * (C - Cp) / (C + 1e-10)
 
     def run(self):
-        print("Reinforcer running. Getting tests")
+        logging.info("Reinforcer running. Getting tests")
         tests = testrunner.get_tests(self.suites, '-OW -ftrain-wazuhl')
-        print("Got tests")
-        print("Before check", len(tests))
+        logging.info("Got tests")
+        logging.info("Before check, {} tests".format(len(tests)))
+        tests = [test for test in tests if str(test) in self.baselines["compile_time"].keys()]
         self.__check__(tests)
-        print("Checked tests")
-        print(self.baselines)
-        #while (True):
-        #    result = testrunner.run_random(tests)
-        #    print("Result: ", self.calculate_reward(result))
+        logging.info("Checked tests")
+
+        while True:
+            logging.info("Run random")
+            result = testrunner.run_random(tests)
+            print("Result: ", self.calculate_reward(result))
 
     def __check__(self, tests):
         tests = set(map(str, tests))
+        logging.info(len(tests))
         compilation_tests = set(self.baselines["compile_time"].keys())
         execution_tests = set(self.baselines["execution_time"].keys())
-        print(tests, compilation_tests, execution_tests)
         message = "Ethalon tests ({0}) differ from the ones for Wazuhl!"
         if tests != compilation_tests:
             utils.error(message.format("compilation"))

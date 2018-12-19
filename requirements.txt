@@ -1,3 +1,4 @@
 pymongo
 cmake
 lit
+tqdm
